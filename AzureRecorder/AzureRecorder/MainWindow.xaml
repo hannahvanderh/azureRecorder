@@ -1,0 +1,28 @@
+﻿<Window x:Class="AzureRecorder.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AzureRecorder"
+        mc:Ignorable="d"
+        Title="ISAT Kinect Recorder Tool" Height="125" Width="550">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto"/>
+      <ColumnDefinition Width="Auto"/>
+      <ColumnDefinition/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition/>
+      <RowDefinition/>
+      <RowDefinition/>
+    </Grid.RowDefinitions>
+    <Label Content="Output File:" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+    <TextBox Grid.Column="1" Height="25" Width="300"/>
+    <Button x:Name="RecordButton" Grid.Column="2" Content="Record" Width="100" Height="25" Click="RecordButton_Click"></Button>
+    <Label Content="Output:" Grid.Row="1" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+    <Label x:Name="consoleOutput" Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+    <Label Content="Error:" Grid.Row="2" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+    <Label x:Name="errorOutput" Foreground="Red" Grid.Row="2" Grid.Column="1" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+  </Grid>
+</Window>
