@@ -21,9 +21,17 @@ namespace AzureRecorder
   /// </summary>
   public partial class MainWindow : Window
   {
-    private Process process;
+    private Process simProcess;
+
+    private Process masterProcess;
+
+    private Process subProcess1;
+
+    private Process subProcess2;
 
     private bool recording = false;
+
+    private object outputLock = new object();
 
     public MainWindow()
     {
@@ -36,17 +44,23 @@ namespace AzureRecorder
       {
         this.recording = true;
         this.RecordButton.Content = "Stop Recording";
-        this.ExecuteCommand("sim.bat");
+        //this.ExecuteCommand("sim.bat", this.simProcess);
+        this.ExecuteCommand("sub1start.bat", this.subProcess1);
+        this.ExecuteCommand("sub2start.bat", this.subProcess2);
+        this.ExecuteCommand("masterstart.bat", this.masterProcess);
       }
       else
       {
         this.RecordButton.Content = "Record";
         this.recording = false;
-        this.process.Close();
+        //this.simProcess.Close();
+        this.subProcess1.Close();
+        this.subProcess2.Close();
+        this.masterProcess.Close();
       }
     }
 
-    private void ExecuteCommand(string command)
+    private void ExecuteCommand(string command, Process process)
     {
       var processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
       processInfo.CreateNoWindow = true;
@@ -54,44 +68,42 @@ namespace AzureRecorder
       processInfo.RedirectStandardError = true;
       processInfo.RedirectStandardOutput = true;
 
-      this.process = Process.Start(processInfo);
+      process = Process.Start(processInfo);
 
-      if (this.process == null)
+      if (process == null)
       {
         return;
       }
 
-      this.process.OutputDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, false);
-      this.process.BeginOutputReadLine();
+      process.OutputDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, false);
+      process.BeginOutputReadLine();
 
-      this.process.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, true);
-      this.process.BeginErrorReadLine();
-
-      //this.process.WaitForExit();
-
-      //Console.WriteLine("ExitCode: {0}", process.ExitCode);
-      //this.process.Close();
+      process.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, true);
+      process.BeginErrorReadLine();
     }
 
     private void OutputConsoleText(string text, bool error)
     {
-      if (string.IsNullOrWhiteSpace(text))
+      lock (this.outputLock)
       {
-        return;
-      }
-
-      Application.Current.Dispatcher.Invoke(
-        () =>
+        if (string.IsNullOrWhiteSpace(text))
         {
-          if (error)
+          return;
+        }
+
+        Application.Current.Dispatcher.Invoke(
+          () =>
           {
-            this.errorOutput.Content = text;
-          }
-          else
-          {
-            this.consoleOutput.Content = text;
-          }
-        });
+            if (error)
+            {
+              this.errorOutput.Content = text;
+            }
+            else
+            {
+              this.consoleOutput.Content = text;
+            }
+          });
+      }
     }
   }
 }
