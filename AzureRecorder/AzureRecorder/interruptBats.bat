@@ -12,13 +12,7 @@ if "%~1"=="-FIXED_CTRL_C" (
 ::go to location of windows-kill.exe
 cd C:\ProgramData\chocolatey\lib\windows-kill\tools\windows-kill_x64_1.1.4_lib_release
 ::get the PIDs of k4arecorder.exe and call windows-kill on them
-for /F "tokens=2" %%K in ('
-   tasklist /FI "ImageName eq k4arecorder.exe" /FO LIST ^| findstr /B "PID:"
-') do (
-   ::echo %%K
-   windows-kill -SIGINT %%K
-   ::echo
-)
+for /F "tokens=2" %%K in ('tasklist /FI "ImageName eq k4arecorder.exe" /FO LIST ^| findstr /B "PID:"') do (windows-kill -SIGINT %%K)
 ::close cmd windows
 PING localhost -n 6 >NUL
 taskkill /FI "WindowTitle eq sub1*" /T

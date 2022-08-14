@@ -70,7 +70,7 @@ namespace AzureRecorder
         //Process.Start("taskkill /FI \"WindowTitle eq master * \" /T");
 
         this.terminateProcess = this.ExecuteCommand($"runInterrupt.bat");
-        this.terminateProcess.WaitForExit();
+        //this.terminateProcess.WaitForExit();
 
         this.subProcess1.Close();
         this.subProcess2.Close();
@@ -86,10 +86,10 @@ namespace AzureRecorder
     private Process ExecuteCommand(string command)
     {
       var processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
-      processInfo.CreateNoWindow = true;
+      processInfo.CreateNoWindow = false;
       processInfo.UseShellExecute = false;
-      processInfo.RedirectStandardError = true;
-      processInfo.RedirectStandardOutput = true;
+      processInfo.RedirectStandardError = false;
+      processInfo.RedirectStandardOutput = false;
 
       var process = Process.Start(processInfo);
 
@@ -97,13 +97,13 @@ namespace AzureRecorder
       {
         return null;
       }
-
+      /*
       process.OutputDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, false);
       process.BeginOutputReadLine();
 
       process.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, true);
       process.BeginErrorReadLine();
-
+      */
       return process;
     }
 
