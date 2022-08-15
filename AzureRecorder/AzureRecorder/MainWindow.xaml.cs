@@ -45,6 +45,7 @@ namespace AzureRecorder
       if (!this.recording)
       {
         var path = this.outputFile.Text;
+        var baseName = this.outputBaseName.Text;
 
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -52,38 +53,39 @@ namespace AzureRecorder
           return;
         }
 
+        if (string.IsNullOrWhiteSpace(baseName))
+        {
+          this.OutputConsoleText("Output instance required", true);
+          return;
+        }
+
         this.recording = true;
         this.RecordButton.Content = "Stop Recording";
-        //this.ExecuteCommand("sim.bat", this.simProcess);
-        this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\output-1.mkv");
-        this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\output-2.mkv");
-        this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\output-0.mkv");
+
+        //TODO list devices, user enter master and sub device index
+        this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv", false);
+        this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv", false);
+        this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\{baseName}-master.mkv", false);
       }
       else
       {
         this.RecordButton.Content = "Record";
         this.recording = false;
-        //this.simProcess.Close();
 
-        //Process.Start("taskkill /FI \"WindowTitle eq sub1 * \" /T");
-        //Process.Start("taskkill /FI \"WindowTitle eq sub2 * \" /T");
-        //Process.Start("taskkill /FI \"WindowTitle eq master * \" /T");
-
-        this.terminateProcess = this.ExecuteCommand($"runInterrupt.bat");
+        //this.terminateProcess = this.ExecuteCommand($"runInterrupt.bat");
         //this.terminateProcess.WaitForExit();
 
-        this.subProcess1.Close();
-        this.subProcess2.Close();
-        this.masterProcess.Close();
-        this.terminateProcess.Close();
+        Utils.StopProgram((uint)this.subProcess1.Id);
+        Utils.StopProgram((uint)this.subProcess2.Id);
+        Utils.StopProgram((uint)this.masterProcess.Id);
 
-        //Process.GetProcessById(this.subProcess1.Id).Kill(true);
-        //Process.GetProcessById(this.subProcess2.Id).Kill(true);
-        //Process.GetProcessById(this.masterProcess.Id).Kill(true);
+        this.subProcess1.CloseMainWindow();
+        this.subProcess2.CloseMainWindow();
+        this.masterProcess.CloseMainWindow();
       }
     }
 
-    private Process ExecuteCommand(string command)
+    private Process ExecuteCommand(string command, bool output)
     {
       var processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
       processInfo.CreateNoWindow = false;
@@ -97,13 +99,17 @@ namespace AzureRecorder
       {
         return null;
       }
-      /*
-      process.OutputDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, false);
-      process.BeginOutputReadLine();
 
-      process.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, true);
-      process.BeginErrorReadLine();
-      */
+      if (output)
+      {
+        process.OutputDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, false);
+        process.BeginOutputReadLine();
+
+        process.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, true);
+        process.BeginErrorReadLine();
+      }
+
+
       return process;
     }
 
@@ -121,7 +127,7 @@ namespace AzureRecorder
           {
             if (error)
             {
-              this.errorOutput.Text = text;
+              //this.errorOutput.Text = text;
             }
             else
             {
