@@ -29,7 +29,7 @@ namespace AzureRecorder
 
     private Process subProcess2;
 
-    private Process terminateProcess;
+    private Process kinectInfoProcess;
 
     private bool recording = false;
 
@@ -38,6 +38,17 @@ namespace AzureRecorder
     public MainWindow()
     {
       InitializeComponent();
+      this.kinectInfoProcess = this.ExecuteCommand($"getKinectDevices.bat", true);
+      this.kinectInfoProcess.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
+      {
+        Application.Current.Dispatcher.Invoke(
+        () =>
+        {
+          this.deviceInfo.Text += $"{e.Data}\n";
+        });
+      }; 
+
+      this.kinectInfoProcess.BeginOutputReadLine();
     }
 
     private void RecordButton_Click(object sender, RoutedEventArgs e)
@@ -46,16 +57,34 @@ namespace AzureRecorder
       {
         var path = this.outputFile.Text;
         var baseName = this.outputBaseName.Text;
+        
+        if(!int.TryParse(this.masterIndex.Text, out var masterIndexNumber))
+        {
+          this.errorOutput.Text = "Master Index Number Required";
+          return;
+        }
+
+        if (!int.TryParse(this.sub1Index.Text, out var sub1IndexNumber))
+        {
+          this.errorOutput.Text = "Sub 1 Index Number Required";
+          return;
+        }
+
+        if (!int.TryParse(this.sub2Index.Text, out var sub2IndexNumber))
+        {
+          this.errorOutput.Text = "Sub 2 Index Number Required";
+          return;
+        }
 
         if (string.IsNullOrWhiteSpace(path))
         {
-          this.OutputConsoleText("Output path required", true);
+          this.errorOutput.Text = "Output Folder Required";
           return;
         }
 
         if (string.IsNullOrWhiteSpace(baseName))
         {
-          this.OutputConsoleText("Output instance required", true);
+          this.errorOutput.Text = "Output instance required";
           return;
         }
 
@@ -63,9 +92,9 @@ namespace AzureRecorder
         this.RecordButton.Content = "Stop Recording";
 
         //TODO list devices, user enter master and sub device index
-        this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv", false);
-        this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv", false);
-        this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\{baseName}-master.mkv", false);
+        this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv {sub1IndexNumber}", false);
+        this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv {sub2IndexNumber}", false);
+        this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\{baseName}-master.mkv {masterIndexNumber}", false);
       }
       else
       {
@@ -88,10 +117,10 @@ namespace AzureRecorder
     private Process ExecuteCommand(string command, bool output)
     {
       var processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
-      processInfo.CreateNoWindow = false;
+      processInfo.CreateNoWindow = output;
       processInfo.UseShellExecute = false;
-      processInfo.RedirectStandardError = false;
-      processInfo.RedirectStandardOutput = false;
+      processInfo.RedirectStandardError = output;
+      processInfo.RedirectStandardOutput = output;
 
       var process = Process.Start(processInfo);
 
@@ -100,41 +129,7 @@ namespace AzureRecorder
         return null;
       }
 
-      if (output)
-      {
-        process.OutputDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, false);
-        process.BeginOutputReadLine();
-
-        process.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => OutputConsoleText(e.Data, true);
-        process.BeginErrorReadLine();
-      }
-
-
       return process;
-    }
-
-    private void OutputConsoleText(string text, bool error)
-    {
-      lock (this.outputLock)
-      {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-          return;
-        }
-
-        Application.Current.Dispatcher.Invoke(
-          () =>
-          {
-            if (error)
-            {
-              //this.errorOutput.Text = text;
-            }
-            else
-            {
-              this.consoleOutput.Text = text;
-            }
-          });
-      }
     }
   }
 }
