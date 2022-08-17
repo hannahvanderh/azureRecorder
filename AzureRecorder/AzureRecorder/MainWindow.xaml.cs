@@ -31,6 +31,8 @@ namespace AzureRecorder
 
     private Process kinectInfoProcess;
 
+    private Process audioProcess;
+
     private bool recording = false;
 
     private object outputLock = new object();
@@ -38,7 +40,7 @@ namespace AzureRecorder
     public MainWindow()
     {
       InitializeComponent();
-      this.kinectInfoProcess = this.ExecuteCommand($"getKinectDevices.bat", true);
+      this.kinectInfoProcess = this.ExecuteCommand($"getKinectDevices.bat", false, false, true);
       this.kinectInfoProcess.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
       {
         Application.Current.Dispatcher.Invoke(
@@ -92,9 +94,21 @@ namespace AzureRecorder
         this.RecordButton.Content = "Stop Recording";
 
         //TODO list devices, user enter master and sub device index
-        this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv {sub1IndexNumber}", false);
-        this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv {sub2IndexNumber}", false);
-        this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\{baseName}-master.mkv {masterIndexNumber}", false);
+        this.audioProcess = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav", true, true, false);
+        this.audioProcess.ErrorDataReceived += (object sender, DataReceivedEventArgs e) =>
+        {
+          Application.Current.Dispatcher.Invoke(
+          () =>
+          {
+            this.errorOutput.Text += $"{e.Data}\n";
+          });
+        };
+
+        this.audioProcess.BeginErrorReadLine();
+
+        this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv {sub1IndexNumber}", true, false, false);
+        this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv {sub2IndexNumber}", true, false, false);
+        this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\{baseName}-master.mkv {masterIndexNumber}", true, false, false);
       }
       else
       {
@@ -107,19 +121,21 @@ namespace AzureRecorder
         Utils.StopProgram((uint)this.subProcess1.Id);
         Utils.StopProgram((uint)this.subProcess2.Id);
         Utils.StopProgram((uint)this.masterProcess.Id);
+        Utils.StopProgram((uint)this.audioProcess.Id);
 
         this.subProcess1.CloseMainWindow();
         this.subProcess2.CloseMainWindow();
         this.masterProcess.CloseMainWindow();
+        this.audioProcess.CloseMainWindow();
       }
     }
 
-    private Process ExecuteCommand(string command, bool output)
+    private Process ExecuteCommand(string command, bool createWindow, bool error, bool output)
     {
       var processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
-      processInfo.CreateNoWindow = output;
+      processInfo.CreateNoWindow = !createWindow;
       processInfo.UseShellExecute = false;
-      processInfo.RedirectStandardError = output;
+      processInfo.RedirectStandardError = error;
       processInfo.RedirectStandardOutput = output;
 
       var process = Process.Start(processInfo);

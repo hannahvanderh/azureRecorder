@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AzureRecorder"
         mc:Ignorable="d"
-        Title="ISAT Kinect Recorder Tool" Height="350" Width="500">
+        Title="ISAT Kinect Recorder Tool" Height="400" Width="500">
   <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="Auto"/>
@@ -35,6 +35,6 @@
     <Button x:Name="RecordButton" Grid.Column="2" Height="25" Grid.Row="7" VerticalAlignment="Bottom" Margin="5" Content="Record" Width="100" Click="RecordButton_Click"></Button>
     <Label Content="Device Info:" FontWeight="Bold" Grid.Row="0" HorizontalContentAlignment="Right" VerticalContentAlignment="Top"/>
     <TextBlock x:Name="deviceInfo" Grid.Row="0" Grid.ColumnSpan="2" Grid.Column="1" VerticalAlignment="Top" TextWrapping="Wrap"/>
-    <TextBlock x:Name="errorOutput" Foreground="Red" VerticalAlignment="Center" Grid.Row="6" Grid.Column="1" TextWrapping="Wrap"/>
+    <TextBlock x:Name="errorOutput" Foreground="Red" VerticalAlignment="Top" Grid.Row="6" Grid.RowSpan="2" Grid.Column="1" TextWrapping="Wrap"/>
   </Grid>
 </Window>
