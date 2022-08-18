@@ -115,21 +115,21 @@ namespace AzureRecorder
         this.RecordButton.Content = "Stop Recording";
 
         //TODO list devices, user enter master and sub device index
-        this.audioProcess = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audioIndexNumber}", true, true, false);
-        //this.audioProcess.ErrorDataReceived += (object sender, DataReceivedEventArgs e) =>
-        //{
-        //  Application.Current.Dispatcher.Invoke(
-        //  () =>
-        //  {
-        //    this.errorOutput.Text += $"{e.Data}\n";
-        //  });
-        //};
-
-        //this.audioProcess.BeginErrorReadLine();
-
         this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv {sub1IndexNumber}", true, false, false);
         this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv {sub2IndexNumber}", true, false, false);
         this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\{baseName}-master.mkv {masterIndexNumber}", true, false, false);
+
+        this.audioProcess = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audioIndexNumber}", true, true, false);
+        this.audioProcess.ErrorDataReceived += (object sender, DataReceivedEventArgs e) =>
+        {
+          Application.Current.Dispatcher.Invoke(
+          () =>
+          {
+            this.errorOutput.Text += $"{e.Data}\n";
+          });
+        };
+
+        this.audioProcess.BeginErrorReadLine();
       }
       else
       {
