@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,6 +32,8 @@ namespace AzureRecorder
 
     private Process kinectInfoProcess;
 
+    private Process audioInfoProess;
+
     private Process audioProcess;
 
     private bool recording = false;
@@ -51,6 +54,18 @@ namespace AzureRecorder
       }; 
 
       this.kinectInfoProcess.BeginOutputReadLine();
+      
+      this.audioInfoProess = this.ExecuteCommand($"getAudioDevices.bat", false, false, true);
+      this.audioInfoProess.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
+      {
+        Application.Current.Dispatcher.Invoke(
+        () =>
+        {
+          this.captureInfo.Text += $"{e.Data}\n";
+        });
+      }; 
+
+      this.audioInfoProess.BeginOutputReadLine();
     }
 
     private void RecordButton_Click(object sender, RoutedEventArgs e)
@@ -77,6 +92,12 @@ namespace AzureRecorder
           this.errorOutput.Text = "Sub 2 Index Number Required";
           return;
         }
+        
+        if (!int.TryParse(this.audioIndex.Text, out var audioIndexNumber))
+        {
+          this.errorOutput.Text = "Audio Index Number Required";
+          return;
+        }
 
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -94,17 +115,17 @@ namespace AzureRecorder
         this.RecordButton.Content = "Stop Recording";
 
         //TODO list devices, user enter master and sub device index
-        this.audioProcess = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav", true, true, false);
-        this.audioProcess.ErrorDataReceived += (object sender, DataReceivedEventArgs e) =>
-        {
-          Application.Current.Dispatcher.Invoke(
-          () =>
-          {
-            this.errorOutput.Text += $"{e.Data}\n";
-          });
-        };
+        this.audioProcess = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audioIndexNumber}", true, true, false);
+        //this.audioProcess.ErrorDataReceived += (object sender, DataReceivedEventArgs e) =>
+        //{
+        //  Application.Current.Dispatcher.Invoke(
+        //  () =>
+        //  {
+        //    this.errorOutput.Text += $"{e.Data}\n";
+        //  });
+        //};
 
-        this.audioProcess.BeginErrorReadLine();
+        //this.audioProcess.BeginErrorReadLine();
 
         this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv {sub1IndexNumber}", true, false, false);
         this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv {sub2IndexNumber}", true, false, false);
@@ -139,6 +160,7 @@ namespace AzureRecorder
       processInfo.RedirectStandardOutput = output;
 
       var process = Process.Start(processInfo);
+      Thread.Sleep(1000);
 
       if (process == null)
       {
