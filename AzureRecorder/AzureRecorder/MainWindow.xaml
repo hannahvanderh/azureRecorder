@@ -24,22 +24,27 @@
       <RowDefinition/>
     </Grid.RowDefinitions>
     <Label Content="Output Folder:" FontWeight="Bold" Grid.Row="2" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-    <TextBox x:Name="outputFile" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" Margin="5"/>
-    <Label Content="Master Index:" FontWeight="Bold" Grid.Row="4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-    <TextBox x:Name="masterIndex" Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2" Margin="5"/>
-    <Label Content="Sub 1 Index:" FontWeight="Bold" Grid.Row="5" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-    <TextBox x:Name="sub1Index" Grid.Column="1" Grid.Row="5" Grid.ColumnSpan="2" Margin="5"/>
-    <Label Content="Sub 2 Index:" FontWeight="Bold" Grid.Row="6" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-    <TextBox x:Name="sub2Index" Grid.Column="1" Grid.Row="6" Grid.ColumnSpan="2" Margin="5"/>
-    <Label Content="Audio Index:" FontWeight="Bold" Grid.Row="7" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-    <TextBox x:Name="audioIndex" Grid.Column="1" Grid.Row="7" Grid.ColumnSpan="2" Margin="5"/>
+    <TextBlock x:Name="outputFile" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" Margin="5" VerticalAlignment="Center"/>
+    <Button x:Name="outputSelect"  TabIndex="1" Click="outputSelect_Click" Height="25" Grid.Row="2" Margin="5" Grid.Column="2" Content="Select Folder"/>
     <Label Content="Recording Name:" FontWeight="Bold" Grid.Row="3" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-    <TextBox x:Name="outputBaseName" Grid.Column="1" Grid.Row="3" Grid.ColumnSpan="2" Margin="5"/>
-    <Button x:Name="RecordButton" Grid.Column="2" Height="25" Grid.Row="9" VerticalAlignment="Bottom" Margin="5" Content="Record" Width="100" Click="RecordButton_Click"></Button>
+    <TextBox x:Name="outputBaseName" TabIndex="2" Grid.Column="1" Grid.Row="3" Grid.ColumnSpan="2" Margin="5"/>
+    <Label Content="Master Index:" FontWeight="Bold" Grid.Row="4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+    <TextBox x:Name="masterIndex" TabIndex="4" Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2" Margin="5"/>
+    <Label Content="Sub 1 Index:" FontWeight="Bold" Grid.Row="5" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+    <TextBox x:Name="sub1Index" TabIndex="4" Grid.Column="1" Grid.Row="5" Grid.ColumnSpan="2" Margin="5"/>
+    <Label Content="Sub 2 Index:" FontWeight="Bold" Grid.Row="6" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+    <TextBox x:Name="sub2Index" TabIndex="5" Grid.Column="1" Grid.Row="6" Grid.ColumnSpan="2" Margin="5"/>
+    <Label Content="Audio Index:" FontWeight="Bold" Grid.Row="7" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+    <TextBox x:Name="audioIndex" TabIndex="6" Grid.Column="1" Grid.Row="7" Grid.ColumnSpan="2" Margin="5"/>
+    <Button x:Name="RecordButton" TabIndex="7" Grid.Column="2" Height="25" Grid.Row="9" VerticalAlignment="Bottom" Margin="5" Content="Record" Width="100" Click="RecordButton_Click"></Button>
     <Label Content="Device Info:" FontWeight="Bold" Grid.Row="0" HorizontalContentAlignment="Right" VerticalContentAlignment="Top"/>
-    <TextBlock x:Name="deviceInfo" Grid.Row="0" Grid.ColumnSpan="2" Grid.Column="1" VerticalAlignment="Top" TextWrapping="Wrap"/>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="150" Grid.Row="0" Grid.ColumnSpan="2" Grid.Column="1">
+      <TextBlock x:Name="deviceInfo" VerticalAlignment="Top" Margin="5" TextWrapping="Wrap"/>
+    </ScrollViewer>
     <Label Content="Audio Info:" FontWeight="Bold" Grid.Row="1" HorizontalContentAlignment="Right" VerticalContentAlignment="Top"/>
-    <TextBlock x:Name="captureInfo" Grid.Row="1" MaxHeight="300" ScrollViewer.CanContentScroll="True" Grid.ColumnSpan="2" Grid.Column="1" VerticalAlignment="Top" TextWrapping="Wrap"/>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="150" Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="1">
+      <TextBlock x:Name="captureInfo" VerticalAlignment="Top" Margin="5" TextWrapping="Wrap"/>
+    </ScrollViewer>
     <TextBlock x:Name="errorOutput" Foreground="Red" VerticalAlignment="Top" Grid.Row="8" Grid.RowSpan="2" Grid.Column="1" TextWrapping="Wrap"/>
   </Grid>
 </Window>
