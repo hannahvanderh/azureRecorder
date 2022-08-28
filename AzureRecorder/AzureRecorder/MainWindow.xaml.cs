@@ -18,6 +18,8 @@ using System.Windows.Shapes;
 using Application = System.Windows.Application;
 using System.ComponentModel;
 using System.IO;
+using System.Windows.Threading;
+using System.Collections.ObjectModel;
 
 namespace AzureRecorder
 {
@@ -48,6 +50,8 @@ namespace AzureRecorder
 
     private bool allowRecording = true;
 
+    private ObservableCollection<string> kinectIndices = new ObservableCollection<string>();
+
     public MainWindow()
     {
       InitializeComponent();
@@ -74,11 +78,19 @@ namespace AzureRecorder
         Application.Current.Dispatcher.Invoke(
         () =>
         {
+          if(e.Data != null && e.Data.Contains("Index:"))
+          {
+            this.kinectIndices.Add(e.Data.Substring(e.Data.IndexOf(":") + 1, 1));
+          }
+
           this.deviceInfo.Text += $"{e.Data}\n";
         });
       };
 
       this.kinectInfoProcess.BeginOutputReadLine();
+      this.masterIndex.ItemsSource = this.kinectIndices;
+      this.sub1Index.ItemsSource = this.kinectIndices;
+      this.sub2Index.ItemsSource = this.kinectIndices;
 
       this.audioInfoProess = this.ExecuteCommand($"getAudioDevices.bat", false, false, true);
       this.audioInfoProess.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
@@ -103,7 +115,7 @@ namespace AzureRecorder
 
     private void RecordButton_Click(object sender, RoutedEventArgs e)
     {
-      if(!this.allowRecording)
+      if (!this.allowRecording)
       {
         this.errorOutput.Text = "Error starting recording, please verify all required tools are installed and restart the application.";
         return;
@@ -115,7 +127,8 @@ namespace AzureRecorder
       }
       else
       {
-        this.EndRecording();
+
+        this.EndRecordingAsync();
       }
     }
 
@@ -170,23 +183,50 @@ namespace AzureRecorder
       this.audioProcess = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audioIndexNumber}", true, false, false);
     }
 
-    private void EndRecording()
+    private async void EndRecordingAsync()
     {
-      this.RecordButton.Content = "Record";
+      this.errorOutput.Text = "Closing recording processes please wait.";
       this.recording = false;
+      this.mainWindow.IsEnabled = false;
 
-      //this.terminateProcess = this.ExecuteCommand($"runInterrupt.bat");
-      //this.terminateProcess.WaitForExit();
+      await Task.Run(() =>
+      {
+        Utils.StopProgram((uint)this.subProcess1.Id);
+        Utils.StopProgram((uint)this.subProcess2.Id);
+        Utils.StopProgram((uint)this.masterProcess.Id);
+        Utils.StopProgram((uint)this.audioProcess.Id);
 
-      Utils.StopProgram((uint)this.subProcess1.Id);
-      Utils.StopProgram((uint)this.subProcess2.Id);
-      Utils.StopProgram((uint)this.masterProcess.Id);
-      Utils.StopProgram((uint)this.audioProcess.Id);
+        this.subProcess1.CloseMainWindow();
+        this.subProcess2.CloseMainWindow();
+        this.masterProcess.CloseMainWindow();
+        this.audioProcess.CloseMainWindow();
+      });
 
-      this.subProcess1.CloseMainWindow();
-      this.subProcess2.CloseMainWindow();
-      this.masterProcess.CloseMainWindow();
-      this.audioProcess.CloseMainWindow();
+      this.errorOutput.Text = string.Empty;
+      this.RecordButton.Content = "Record";
+      this.mainWindow.IsEnabled = true;
+    }
+
+    private async void OnCloseRecodingAsync()
+    {
+      this.errorOutput.Text = "Closing recording processes please wait.";
+      this.mainWindow.IsEnabled = false;
+
+      await Task.Run(() =>
+      {
+        Utils.StopProgram((uint)this.subProcess1.Id);
+        Utils.StopProgram((uint)this.subProcess2.Id);
+        Utils.StopProgram((uint)this.masterProcess.Id);
+        Utils.StopProgram((uint)this.audioProcess.Id);
+
+        this.subProcess1.CloseMainWindow();
+        this.subProcess2.CloseMainWindow();
+        this.masterProcess.CloseMainWindow();
+        this.audioProcess.CloseMainWindow();
+      });
+
+      this.recording = false;
+      this.Close();
     }
 
     private Process ExecuteCommand(string command, bool createWindow, bool error, bool output)
@@ -219,10 +259,18 @@ namespace AzureRecorder
     {
       if (this.recording)
       {
-        this.EndRecording();
+        e.Cancel = true;
+        this.OnCloseRecodingAsync();
       }
+      else
+      {
+        base.OnClosing(e);
+      }
+    }
 
-      base.OnClosing(e);
+    private void closeButton_Click(object sender, RoutedEventArgs e)
+    {
+
     }
   }
 }
