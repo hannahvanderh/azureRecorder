@@ -20,6 +20,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows.Threading;
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 
 namespace AzureRecorder
 {
@@ -52,6 +53,8 @@ namespace AzureRecorder
 
     private ObservableCollection<string> kinectIndices = new ObservableCollection<string>();
 
+    private Regex kinectIndexRegex;
+
     public MainWindow()
     {
       InitializeComponent();
@@ -71,16 +74,21 @@ namespace AzureRecorder
         return;
       }
 
-
+      this.kinectIndexRegex = new Regex("Index:([0-9]*)");
       this.kinectInfoProcess = this.ExecuteCommand($"getKinectDevices.bat", false, false, true);
       this.kinectInfoProcess.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
       {
         Application.Current.Dispatcher.Invoke(
         () =>
         {
-          if(e.Data != null && e.Data.Contains("Index:"))
+          if (e.Data != null && e.Data.Contains("Index:"))
           {
-            this.kinectIndices.Add(e.Data.Substring(e.Data.IndexOf(":") + 1, 1));
+            var match = this.kinectIndexRegex.Match(e.Data);
+
+            if (match.Success)
+            {
+              this.kinectIndices.Add(match.Value.Split(":")[1]);
+            }
           }
 
           this.deviceInfo.Text += $"{e.Data}\n";
