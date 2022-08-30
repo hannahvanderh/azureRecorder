@@ -38,7 +38,7 @@
     <Label Content="Sub 2 Index:" FontWeight="Bold" Grid.Row="7" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
     <ComboBox x:Name="sub2Index" TabIndex="5" Grid.Column="1" Grid.Row="7" Grid.ColumnSpan="2" Margin="5"/>
     <Label Content="Audio Index:" FontWeight="Bold" Grid.Row="8" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-    <TextBox x:Name="audioIndex" TabIndex="6" Grid.Column="1" Grid.Row="8" Grid.ColumnSpan="2" Margin="5"/>
+    <ComboBox x:Name="audioIndex" TabIndex="6" Grid.Column="1" Grid.Row="8" Grid.ColumnSpan="2" Margin="5"/>
     <Button x:Name="RecordButton" TabIndex="7" Grid.Column="2" Height="25" Grid.Row="10" VerticalAlignment="Bottom" Margin="5" Content="Record" Width="100" Click="RecordButton_Click"></Button>
     <Label Content="Device Info:" FontWeight="Bold" Grid.Row="1" HorizontalContentAlignment="Right" VerticalContentAlignment="Top"/>
     <ScrollViewer VerticalScrollBarVisibility="Auto" Height="150" Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="1">
