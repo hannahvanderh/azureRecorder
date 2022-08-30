@@ -53,7 +53,13 @@ namespace AzureRecorder
 
     private ObservableCollection<string> kinectIndices = new ObservableCollection<string>();
 
+    private ObservableCollection<string> audioIndices = new ObservableCollection<string>() { "N/A" };
+
     private Regex kinectIndexRegex;
+
+    private Regex audioIndexRegex;
+
+    private bool useAudio = true;
 
     public MainWindow()
     {
@@ -81,17 +87,16 @@ namespace AzureRecorder
         Application.Current.Dispatcher.Invoke(
         () =>
         {
-          if (e.Data != null && e.Data.Contains("Index:"))
+          if (e.Data != null)
           {
             var match = this.kinectIndexRegex.Match(e.Data);
-
             if (match.Success)
             {
               this.kinectIndices.Add(match.Value.Split(":")[1]);
             }
-          }
 
-          this.deviceInfo.Text += $"{e.Data}\n";
+            this.deviceInfo.Text += $"{e.Data}\n";
+          }
         });
       };
 
@@ -100,6 +105,7 @@ namespace AzureRecorder
       this.sub1Index.ItemsSource = this.kinectIndices;
       this.sub2Index.ItemsSource = this.kinectIndices;
 
+      this.audioIndexRegex = new Regex("device #([0-9]*)");
       this.audioInfoProess = this.ExecuteCommand($"getAudioDevices.bat", false, false, true);
       this.audioInfoProess.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
       {
@@ -113,12 +119,22 @@ namespace AzureRecorder
 
           if (this.captureRecieved)
           {
-            this.captureInfo.Text += $"{e.Data}\n";
+            if (e.Data != null)
+            {
+              var match = this.audioIndexRegex.Match(e.Data);
+              if (match.Success)
+              {
+                this.audioIndices.Add(match.Value.Split("#")[1]);
+              }
+
+              this.captureInfo.Text += $"{e.Data}\n";
+            }
           }
         });
       };
 
       this.audioInfoProess.BeginOutputReadLine();
+      this.audioIndex.ItemsSource = this.audioIndices;
     }
 
     private void RecordButton_Click(object sender, RoutedEventArgs e)
@@ -163,10 +179,22 @@ namespace AzureRecorder
         return;
       }
 
-      if (!int.TryParse(this.audioIndex.Text, out var audioIndexNumber))
+      var audioIndexNumber = 0;
+      if (string.IsNullOrWhiteSpace(this.audioIndex.Text))
       {
-        this.errorOutput.Text = "Audio Index Number Required";
+        this.errorOutput.Text = "Audio Index Required";
         return;
+      }
+      else
+      {
+        if (int.TryParse(this.audioIndex.Text, out audioIndexNumber))
+        {
+          this.useAudio = true;
+        }
+        else
+        {
+          this.useAudio = false;
+        }
       }
 
       if (string.IsNullOrWhiteSpace(path))
@@ -188,7 +216,11 @@ namespace AzureRecorder
       this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv {sub1IndexNumber}", true, false, false);
       this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv {sub2IndexNumber}", true, false, false);
       this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\{baseName}-master.mkv {masterIndexNumber}", true, false, false);
-      this.audioProcess = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audioIndexNumber}", true, false, false);
+
+      if (this.useAudio)
+      {
+        this.audioProcess = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audioIndexNumber}", true, false, false);
+      }
     }
 
     private async void EndRecordingAsync()
@@ -202,12 +234,20 @@ namespace AzureRecorder
         Utils.StopProgram((uint)this.subProcess1.Id);
         Utils.StopProgram((uint)this.subProcess2.Id);
         Utils.StopProgram((uint)this.masterProcess.Id);
-        Utils.StopProgram((uint)this.audioProcess.Id);
+
+        if (this.useAudio)
+        {
+          Utils.StopProgram((uint)this.audioProcess.Id);
+        }
 
         this.subProcess1.CloseMainWindow();
         this.subProcess2.CloseMainWindow();
         this.masterProcess.CloseMainWindow();
+
+        if(this.useAudio)
+        {
         this.audioProcess.CloseMainWindow();
+        }
       });
 
       this.errorOutput.Text = string.Empty;
