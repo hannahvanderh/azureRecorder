@@ -51,7 +51,9 @@ namespace AzureRecorder
 
     private bool allowRecording = true;
 
-    private ObservableCollection<string> kinectIndices = new ObservableCollection<string>();
+    private ObservableCollection<string> kinectMasterIndices = new ObservableCollection<string>();
+
+    private ObservableCollection<string> kinectSubIndices = new ObservableCollection<string>() { "N/A" };
 
     private ObservableCollection<string> audioIndices = new ObservableCollection<string>() { "N/A" };
 
@@ -60,6 +62,10 @@ namespace AzureRecorder
     private Regex audioIndexRegex;
 
     private bool useAudio = true;
+
+    private bool useSub1 = true;
+
+    private bool useSub2 = true;
 
     public MainWindow()
     {
@@ -92,7 +98,8 @@ namespace AzureRecorder
             var match = this.kinectIndexRegex.Match(e.Data);
             if (match.Success)
             {
-              this.kinectIndices.Add(match.Value.Split(":")[1]);
+              this.kinectMasterIndices.Add(match.Value.Split(":")[1]);
+              this.kinectSubIndices.Add(match.Value.Split(":")[1]);
             }
 
             this.deviceInfo.Text += $"{e.Data}\n";
@@ -101,9 +108,10 @@ namespace AzureRecorder
       };
 
       this.kinectInfoProcess.BeginOutputReadLine();
-      this.masterIndex.ItemsSource = this.kinectIndices;
-      this.sub1Index.ItemsSource = this.kinectIndices;
-      this.sub2Index.ItemsSource = this.kinectIndices;
+      this.masterIndex.ItemsSource = this.kinectMasterIndices;
+
+      this.sub1Index.ItemsSource = this.kinectSubIndices;
+      this.sub2Index.ItemsSource = this.kinectSubIndices;
 
       this.audioIndexRegex = new Regex("device #([0-9]*)");
       this.audioInfoProess = this.ExecuteCommand($"getAudioDevices.bat", false, false, true);
@@ -167,22 +175,58 @@ namespace AzureRecorder
         return;
       }
 
-      if (!int.TryParse(this.sub1Index.Text, out var sub1IndexNumber))
+      var sub1IndexNumber = 0;
+      if (string.IsNullOrWhiteSpace(this.sub1Index.Text))
       {
-        this.errorOutput.Text = "Sub 1 Index Number Required";
+        this.errorOutput.Text = "Sub 1 Selection Required";
         return;
       }
-
-      if (!int.TryParse(this.sub2Index.Text, out var sub2IndexNumber))
+      else
       {
-        this.errorOutput.Text = "Sub 2 Index Number Required";
+        if (int.TryParse(this.sub1Index.Text, out sub1IndexNumber))
+        {
+          this.useSub1 = true;
+        }
+        else
+        {
+          sub1IndexNumber = -1;
+          this.useSub1 = false;
+        }
+      }
+
+      var sub2IndexNumber = 0;
+      if (string.IsNullOrWhiteSpace(this.sub2Index.Text))
+      {
+        this.errorOutput.Text = "Sub 2 Selection Required";
         return;
+      }
+      else
+      {
+        if (int.TryParse(this.sub2Index.Text, out sub2IndexNumber))
+        {
+          this.useSub2 = true;
+        }
+        else
+        {
+          sub2IndexNumber = -1;
+          this.useSub2 = false;
+        }
+      }
+
+      //Don't allow duplicates
+      if (sub1IndexNumber == sub2IndexNumber || masterIndexNumber == sub1IndexNumber || masterIndexNumber == sub2IndexNumber)
+      {
+        if (this.useSub1 || this.useSub2)
+        {
+          this.errorOutput.Text = "Duplicate Kinect Index selections are not allowed";
+          return;
+        }
       }
 
       var audioIndexNumber = 0;
       if (string.IsNullOrWhiteSpace(this.audioIndex.Text))
       {
-        this.errorOutput.Text = "Audio Index Required";
+        this.errorOutput.Text = "Audio Selection Required";
         return;
       }
       else
@@ -213,8 +257,16 @@ namespace AzureRecorder
       this.RecordButton.Content = "Stop Recording";
 
       //TODO list devices, user enter master and sub device index
-      this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv {sub1IndexNumber}", true, false, false);
-      this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv {sub2IndexNumber}", true, false, false);
+      if (this.useSub1)
+      {
+        this.subProcess1 = this.ExecuteCommand($"sub1start.bat {path}\\{baseName}-sub1.mkv {sub1IndexNumber}", true, false, false);
+      }
+
+      if (this.useSub2)
+      {
+        this.subProcess2 = this.ExecuteCommand($"sub2start.bat {path}\\{baseName}-sub2.mkv {sub2IndexNumber}", true, false, false);
+      }
+
       this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\{baseName}-master.mkv {masterIndexNumber}", true, false, false);
 
       if (this.useAudio)
@@ -231,8 +283,16 @@ namespace AzureRecorder
 
       await Task.Run(() =>
       {
-        Utils.StopProgram((uint)this.subProcess1.Id);
-        Utils.StopProgram((uint)this.subProcess2.Id);
+        if (this.useSub1)
+        {
+          Utils.StopProgram((uint)this.subProcess1.Id);
+        }
+
+        if (this.useSub2)
+        {
+          Utils.StopProgram((uint)this.subProcess2.Id);
+        }
+
         Utils.StopProgram((uint)this.masterProcess.Id);
 
         if (this.useAudio)
@@ -240,13 +300,21 @@ namespace AzureRecorder
           Utils.StopProgram((uint)this.audioProcess.Id);
         }
 
-        this.subProcess1.CloseMainWindow();
-        this.subProcess2.CloseMainWindow();
+        if (this.useSub1)
+        {
+          this.subProcess1.CloseMainWindow();
+        }
+
+        if (this.useSub2)
+        {
+          this.subProcess2.CloseMainWindow();
+        }
+
         this.masterProcess.CloseMainWindow();
 
-        if(this.useAudio)
+        if (this.useAudio)
         {
-        this.audioProcess.CloseMainWindow();
+          this.audioProcess.CloseMainWindow();
         }
       });
 
