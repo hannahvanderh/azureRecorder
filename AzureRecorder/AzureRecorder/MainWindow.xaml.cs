@@ -39,9 +39,13 @@ namespace AzureRecorder
 
     private Process kinectInfoProcess;
 
-    private Process audioInfoProess;
+    private Process audioInfoProcess;
 
-    private Process audioProcess;
+    private Process audioProcess1;
+
+    private Process audioProcess2;
+
+    private Process audioProcess3;
 
     private bool recording = false;
 
@@ -61,7 +65,11 @@ namespace AzureRecorder
 
     private Regex audioIndexRegex;
 
-    private bool useAudio = true;
+    private bool useAudio1 = true;
+
+    private bool useAudio2 = true;
+
+    private bool useAudio3 = true;
 
     private bool useSub1 = true;
 
@@ -72,9 +80,9 @@ namespace AzureRecorder
       InitializeComponent();
 
       //verify the tools are installed before checking devices
-      if (!Directory.Exists("C:\\Program Files\\Azure Kinect SDK v1.4.1\\tools"))
+      if (!Directory.Exists("C:\\Program Files\\Azure Kinect SDK v1.4.2\\tools"))
       {
-        this.errorOutput.Text = "Azure Kinect SDK V1.4.1 not found, please install and restart the application";
+        this.errorOutput.Text = "Azure Kinect SDK v1.4.2 not found, please install and restart the application";
         this.allowRecording = false;
         return;
       }
@@ -114,8 +122,8 @@ namespace AzureRecorder
       this.sub2Index.ItemsSource = this.kinectSubIndices;
 
       this.audioIndexRegex = new Regex("device #([0-9]*)");
-      this.audioInfoProess = this.ExecuteCommand($"getAudioDevices.bat", false, false, true);
-      this.audioInfoProess.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
+      this.audioInfoProcess = this.ExecuteCommand($"getAudioDevices.bat", false, false, true);
+      this.audioInfoProcess.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
       {
         Application.Current.Dispatcher.Invoke(
         () =>
@@ -141,8 +149,10 @@ namespace AzureRecorder
         });
       };
 
-      this.audioInfoProess.BeginOutputReadLine();
-      this.audioIndex.ItemsSource = this.audioIndices;
+      this.audioInfoProcess.BeginOutputReadLine();
+      this.audioIndex1.ItemsSource = this.audioIndices;
+      this.audioIndex2.ItemsSource = this.audioIndices;
+      this.audioIndex3.ItemsSource = this.audioIndices;
     }
 
     private void RecordButton_Click(object sender, RoutedEventArgs e)
@@ -223,21 +233,57 @@ namespace AzureRecorder
         }
       }
 
-      var audioIndexNumber = 0;
-      if (string.IsNullOrWhiteSpace(this.audioIndex.Text))
+      var audio1IndexNumber = 0;
+      if (string.IsNullOrWhiteSpace(this.audioIndex1.Text))
       {
-        this.errorOutput.Text = "Audio Selection Required";
+        this.errorOutput.Text = "Audio 1 Selection Required";
         return;
       }
       else
       {
-        if (int.TryParse(this.audioIndex.Text, out audioIndexNumber))
+        if (int.TryParse(this.audioIndex1.Text, out audio1IndexNumber))
         {
-          this.useAudio = true;
+          this.useAudio1 = true;
         }
         else
         {
-          this.useAudio = false;
+          this.useAudio1 = false;
+        }
+      }
+
+      var audio2IndexNumber = 0;
+      if (string.IsNullOrWhiteSpace(this.audioIndex2.Text))
+      {
+        this.errorOutput.Text = "Audio 2 Selection Required";
+        return;
+      }
+      else
+      {
+        if (int.TryParse(this.audioIndex2.Text, out audio2IndexNumber))
+        {
+          this.useAudio2 = true;
+        }
+        else
+        {
+          this.useAudio2 = false;
+        }
+      }
+
+      var audio3IndexNumber = 0;
+      if (string.IsNullOrWhiteSpace(this.audioIndex3.Text))
+      {
+        this.errorOutput.Text = "Audio 3 Selection Required";
+        return;
+      }
+      else
+      {
+        if (int.TryParse(this.audioIndex3.Text, out audio3IndexNumber))
+        {
+          this.useAudio3 = true;
+        }
+        else
+        {
+          this.useAudio3 = false;
         }
       }
 
@@ -269,9 +315,19 @@ namespace AzureRecorder
 
       this.masterProcess = this.ExecuteCommand($"masterstart.bat {path}\\{baseName}-master.mkv {masterIndexNumber}", true, false, false);
 
-      if (this.useAudio)
+      if (this.useAudio1)
       {
-        this.audioProcess = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audioIndexNumber}", true, false, false);
+        this.audioProcess1 = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audio1IndexNumber}", true, false, false);
+      }
+
+      if (this.useAudio2)
+      {
+        this.audioProcess2 = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audio2IndexNumber}", true, false, false);
+      }
+
+      if (this.useAudio3)
+      {
+        this.audioProcess3 = this.ExecuteCommand($"audiostart.bat {path}\\{baseName}-audio.wav {audio3IndexNumber}", true, false, false);
       }
     }
 
@@ -295,9 +351,19 @@ namespace AzureRecorder
 
         Utils.StopProgram((uint)this.masterProcess.Id);
 
-        if (this.useAudio)
+        if (this.useAudio1)
         {
-          Utils.StopProgram((uint)this.audioProcess.Id);
+          Utils.StopProgram((uint)this.audioProcess1.Id);
+        }
+
+        if (this.useAudio2)
+        {
+          Utils.StopProgram((uint)this.audioProcess2.Id);
+        }
+
+        if (this.useAudio3)
+        {
+          Utils.StopProgram((uint)this.audioProcess3.Id);
         }
 
         if (this.useSub1)
@@ -312,9 +378,19 @@ namespace AzureRecorder
 
         this.masterProcess.CloseMainWindow();
 
-        if (this.useAudio)
+        if (this.useAudio1)
         {
-          this.audioProcess.CloseMainWindow();
+          this.audioProcess1.CloseMainWindow();
+        }
+
+        if (this.useAudio2)
+        {
+          this.audioProcess2.CloseMainWindow();
+        }
+
+        if (this.useAudio3)
+        {
+          this.audioProcess3.CloseMainWindow();
         }
       });
 
@@ -333,12 +409,16 @@ namespace AzureRecorder
         Utils.StopProgram((uint)this.subProcess1.Id);
         Utils.StopProgram((uint)this.subProcess2.Id);
         Utils.StopProgram((uint)this.masterProcess.Id);
-        Utils.StopProgram((uint)this.audioProcess.Id);
+        Utils.StopProgram((uint)this.audioProcess1.Id);
+        Utils.StopProgram((uint)this.audioProcess2.Id);
+        Utils.StopProgram((uint)this.audioProcess3.Id);
 
         this.subProcess1.CloseMainWindow();
         this.subProcess2.CloseMainWindow();
         this.masterProcess.CloseMainWindow();
-        this.audioProcess.CloseMainWindow();
+        this.audioProcess1.CloseMainWindow();
+        this.audioProcess2.CloseMainWindow();
+        this.audioProcess3.CloseMainWindow();
       });
 
       this.recording = false;
